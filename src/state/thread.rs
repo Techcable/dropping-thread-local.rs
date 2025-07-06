@@ -1,14 +1,16 @@
 //! Thread-specific state.
 
-use crate::state::GLOBAL_STATE;
-use crate::state::ids::{LiveLocalId, LiveThreadId, UniqueThreadId};
-use crate::state::local_defs::ActiveLocalDef;
-use parking_lot::{Mutex, RwLockReadGuard, RwLockWriteGuard};
 use std::cell::Cell;
 use std::ffi::c_void;
 use std::ptr::NonNull;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicPtr, Ordering};
+
+use parking_lot::{Mutex, RwLockReadGuard, RwLockWriteGuard};
+
+use crate::state::GLOBAL_STATE;
+use crate::state::ids::{LiveLocalId, LiveThreadId, UniqueThreadId};
+use crate::state::local_defs::ActiveLocalDef;
 
 /// The state of a currently live thread.
 pub struct ActiveThreadState {
@@ -83,10 +85,8 @@ impl ActiveThreadState {
             .values
             .get(original_length)
             .expect("despite holding lock, value slot partially initialized");
-        slot.local_def.store(
-            Arc::into_raw(Arc::clone(&live_local)).cast_mut(),
-            Ordering::Release,
-        );
+        slot.local_def
+            .store(Arc::into_raw(Arc::clone(&live_local)).cast_mut(), Ordering::Release);
         slot
     }
 }

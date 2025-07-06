@@ -1,10 +1,11 @@
-use portable_atomic::AtomicU64;
 use std::cell::RefCell;
 use std::cmp::Reverse;
 use std::collections::{BTreeSet, BinaryHeap};
 use std::num::NonZero;
 use std::sync::OnceLock;
 use std::sync::atomic::Ordering;
+
+use portable_atomic::AtomicU64;
 
 /// Manages thread and local ids.
 ///
@@ -29,10 +30,7 @@ impl IdManager {
         }
     }
     pub fn acquire_local_id(&mut self) -> (UniqueLocalId, LiveLocalId) {
-        (
-            UniqueLocalId::acquire(),
-            LiveLocalId(self.local_ids.get_mut().alloc()),
-        )
+        (UniqueLocalId::acquire(), LiveLocalId(self.local_ids.get_mut().alloc()))
     }
     /// Acquire a [`LiveThreadId`] for the current thread.
     ///
@@ -48,10 +46,7 @@ impl IdManager {
             // since double init is UB, we should check for it
             let seen_threads = self.seen_threads.get_or_insert_default();
             let is_new = seen_threads.insert(uid);
-            assert!(
-                is_new,
-                "Already acquired live id for {uid:?} (double initialization?)"
-            );
+            assert!(is_new, "Already acquired live id for {uid:?} (double initialization?)");
         }
         (uid, LiveThreadId(self.thread_ids.get_mut().alloc()))
     }
@@ -165,8 +160,6 @@ impl ReusingIdManager {
 
     #[cold]
     pub fn free(&mut self, id: usize) {
-        self.free_list
-            .get_or_insert_with(BinaryHeap::new)
-            .push(Reverse(id));
+        self.free_list.get_or_insert_with(BinaryHeap::new).push(Reverse(id));
     }
 }

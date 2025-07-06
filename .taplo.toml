@@ -1,0 +1,10 @@
+[formatting]
+# 4 spaces, not two
+indent_string = "    "
+# i expand things when I want to
+array_auto_collapse = false
+# 80 lines is for suckers
+column_width = 120
+# this tries to line up comments after entries in a nice little table
+# these sorts of ASCII tables are far too fragile for my taste
+align_comments = false

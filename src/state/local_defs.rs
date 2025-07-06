@@ -1,10 +1,12 @@
-use crate::state::GLOBAL_STATE;
-use crate::state::ids::{LiveLocalId, LiveThreadId, UniqueLocalId};
-use foldhash::HashSet;
-use parking_lot::{Mutex, RwLock};
 use std::collections::BTreeSet;
 use std::ffi::c_void;
 use std::sync::Arc;
+
+use foldhash::HashSet;
+use parking_lot::{Mutex, RwLock};
+
+use crate::state::GLOBAL_STATE;
+use crate::state::ids::{LiveLocalId, LiveThreadId, UniqueLocalId};
 
 pub struct ActiveLocalDef {
     unique_id: UniqueLocalId,

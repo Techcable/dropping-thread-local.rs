@@ -1,0 +1,12 @@
+# rustfmt config for DuckLogic
+
+unstable_features = true
+
+# TODO: I want to have spaces between declarations,
+# but not between statements
+# blank_lines_lower_bound = 1
+max_width = 120
+style_edition = "2024"
+edition = "2024"
+imports_granularity = "module"
+group_imports = "StdExternalCrate"

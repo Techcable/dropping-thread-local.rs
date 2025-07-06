@@ -2,12 +2,14 @@
 //!
 //! This limits the actions that can be done concurrently.
 
+use std::cell::RefCell;
+use std::sync::{Arc, Weak};
+
+use parking_lot::{Mutex, RwLock};
+
 use crate::state::ids::{IdManager, LiveLocalId, LiveThreadId, UniqueLocalId, UniqueThreadId};
 use crate::state::local_defs::ActiveLocalDef;
 use crate::state::thread::ActiveThreadState;
-use parking_lot::{Mutex, RwLock};
-use std::cell::RefCell;
-use std::sync::{Arc, Weak};
 
 /// The global state of the thread_locals,
 /// protected by a single mutex.
