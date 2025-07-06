@@ -1,0 +1,9 @@
+## intellij
+/.idea
+
+## rust
+debug/
+target/
+
+/Cargo.lock
+
