@@ -10,13 +10,19 @@ publish = false
 [dependencies]
 parking_lot = "0.12"
 portable-atomic = "1"
-boxcar = "0.2"
+foldhash = "0.1"
+# persistent collections
+imbl = "5"
 
-[lints.rustc]
-missing-docs = "warn"
+[features]
+nightly = [
+    "parking_lot/nightly",
+]
+
+[lints.rust]
+missing-docs = "deny"
 rust-2024-compatibility = "warn"
 unsafe-op-in-unsafe-fn = "deny"
-lossy-provenance-casts = "deny"
 macro-use-extern-crate = "deny"
 
 [lints.clippy]
