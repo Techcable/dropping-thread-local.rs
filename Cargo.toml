@@ -1,11 +1,15 @@
 [package]
 name = "dropping-thread-local"
-description = "A ThreadLocal that executes destructors are run"
+description = "A dynamically allocated ThreadLocal that ensures destructors are run on thread exit"
 version = "0.1.0-alpha.0"
+authors = ["Techcable"]
 license = "Apache-2.0 OR MIT"
 edition = "2024"
-# TODO: Release publicly
-publish = false
+repository = "https://github.com/Techcable/dropping-thread-local.rs"
+keywords = ["thread-local", "drop", "concurrent", "thread", "destructor"]
+categories = ["concurrency", "data-structures", "memory-management"]
+# 1.85 - 2024 edition
+rust-version = "1.85"
 
 [dependencies]
 parking_lot = "0.12"
