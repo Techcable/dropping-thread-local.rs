@@ -1,4 +1,7 @@
-# dropping-thread-local
+# dropping-thread-local [![Latest Version]][crates.io]
+
+[Latest Version]: https://img.shields.io/crates/v/dropping-thread-local.svg
+[crates.io]: https://crates.io/crates/dropping-thread-local
 <!-- cargo-rdme start -->
 
 Dynamically allocated thread locals that properly run destructors when a thread is destroyed.
@@ -65,3 +68,8 @@ or if the [`DroppingThreadLocal`] itself is dropped.
 [`DroppingThreadLocal`]: https://docs.rs/dropping-thread-local/latest/dropping-thread-local/struct.DroppingThreadLocal.html
 [`DroppingThreadLocal::snapshot_iter`]: https://docs.rs/dropping-thread-local/latest/dropping-thread-local/struct.DroppingThreadLocal.html#method.snapshot_iter
 
+
+## License
+Licensed under either the [Apache 2.0 License](./LICENSE-APACHE.txt) or [MIT License](./LICENSE-MIT.txt) at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this project by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions. 
