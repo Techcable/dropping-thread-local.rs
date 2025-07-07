@@ -6,6 +6,7 @@ format: && spellcheck
 check: check-format
     -just spellcheck
     cargo clippy
+    cargo rdme --check
 
 check-format: && spellcheck
     taplo format
