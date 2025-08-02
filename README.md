@@ -64,12 +64,17 @@ or if the [`DroppingThreadLocal`] itself is dropped.
 
 <!-- cargo inline doc references -->
 [`std::thread_local!`]: https://doc.rust-lang.org/std/macro.thread_local.html
-[`parking_lot::Mutex`]: https://docs.rs/parking_lot/latest/parking_lot/type.Mutex.html 
+[`parking_lot::Mutex`]: https://docs.rs/parking_lot/latest/parking_lot/type.Mutex.html
 [`DroppingThreadLocal`]: https://docs.rs/dropping-thread-local/latest/dropping-thread-local/struct.DroppingThreadLocal.html
 [`DroppingThreadLocal::snapshot_iter`]: https://docs.rs/dropping-thread-local/latest/dropping-thread-local/struct.DroppingThreadLocal.html#method.snapshot_iter
 
+## Prior Art
+- [`per-thread-object`](https://github.com/quininer/per-thread-object) - I have not investigated this, but it appears very similar. By the maintainer of `io_uring`.
+- [`thread_local`](https://github.com/Amanieu/thread_local-rs) - Discussed in documentation.
+- [`std::thread::LocalKey`](https://doc.rust-lang.org/std/thread/struct.LocalKey.html) - Part of the stdlib. It is the abstraction upon which this crate is based.
+   - The unstable [`#[thread_local]` attribute](https://github.com/rust-lang/rust/issues/29594) may be faster than a `LocalKey`
 
 ## License
 Licensed under either the [Apache 2.0 License](./LICENSE-APACHE.txt) or [MIT License](./LICENSE-MIT.txt) at your option.
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this project by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions. 
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this project by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
