@@ -18,10 +18,18 @@ foldhash = "0.1"
 # persistent collections
 imbl = "5"
 
+[dev-dependencies]
+thread_local = "1"
+criterion = { version = "0.7" }
+
 [features]
 nightly = [
     "parking_lot/nightly",
 ]
+
+[[bench]]
+name = "lookup"
+harness = false
 
 [lints.rust]
 missing-docs = "deny"
