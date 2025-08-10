@@ -147,24 +147,33 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     }
     /// Get the value associated with the current thread,
     /// initializing it if not yet defined.
-    #[inline]
+    ///
+    /// Panics if double initialization is detected.
     pub fn get_or_init(&self, func: impl FnOnce() -> T) -> SharedRef<T> {
+        match self.get_or_try_init::<core::convert::Infallible>(|| Ok(func())) {
+            Ok(success) => success,
+        }
+    }
+
+    /// Get the value associated with the current thread,
+    /// attempting to initialize it if not yet defined.
+    ///
+    /// Panics if double initialization is detected.
+    pub fn get_or_try_init<E>(&self, func: impl FnOnce() -> Result<T, E>) -> Result<SharedRef<T>, E> {
         THREAD_STATE.with(|thread| {
-            let value = thread
-                .get(self.id)
-                .unwrap_or_else(|| {
-                    let mut func = Some(func);
-                    thread.init(self.id, &mut || {
-                        let func = func.take().unwrap();
-                        Arc::new(func()) as Arc<dyn Any + Send + Sync + 'static>
-                    })
-                })
-                .downcast::<T>()
-                .expect("unexpected type");
-            SharedRef {
+            let value = match thread.get(self.id) {
+                Some(existing) => existing,
+                None => {
+                    let new_value = Arc::new(func()?) as DynArc;
+                    thread.init(self.id, &new_value);
+                    new_value
+                }
+            };
+            let value = value.downcast::<T>().expect("unexpected type");
+            Ok(SharedRef {
                 thread_id: thread.id,
                 value,
-            }
+            })
         })
     }
     /// Iterate over currently live values and their associated thread ids.
@@ -382,7 +391,7 @@ struct LiveThreadState {
     /// Maps from local ids to values.
     ///
     /// ## Performance
-    /// This is noticeably slower than what `thread_local`.
+    /// This is noticeably slower than what `thread_local` offers.
     ///
     /// We could make it faster if we used a vector
     /// A `boxcar::Vec` is essentially the same data structure as `thread_local` uses,
@@ -403,8 +412,7 @@ impl LiveThreadState {
     // the arc has dynamic type to avoid monomorphization
     #[cold]
     #[inline(never)]
-    fn init(&self, id: UniqueLocalId, init: &mut dyn FnMut() -> DynArc) -> DynArc {
-        let new_value = init();
+    fn init(&self, id: UniqueLocalId, new_value: &DynArc) {
         let mut lock = self.values.lock();
         use std::collections::hash_map::Entry;
         match lock.entry(id) {
@@ -412,10 +420,9 @@ impl LiveThreadState {
                 panic!("unexpected double initialization of thread-local value")
             }
             Entry::Vacant(entry) => {
-                entry.insert(Arc::clone(&new_value));
+                entry.insert(Arc::clone(new_value));
             }
         }
-        new_value
     }
 }
 impl Drop for LiveThreadState {
