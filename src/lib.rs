@@ -147,6 +147,23 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
             })
         })
     }
+    /// Set the value associated with this thread,
+    /// returning an `Err(existing_val)` if already initialized,
+    /// and a reference to the new value if successful.
+    pub fn set(&self, value: T) -> Result<SharedRef<T>, SharedRef<T>> {
+        if let Some(existing) = self.get() {
+            Err(existing)
+        } else {
+            THREAD_STATE.with(|thread| {
+                let new_value = Arc::new(value) as DynArc;
+                thread.init(self.id, &new_value);
+                Ok(SharedRef {
+                    thread_id: thread.id,
+                    value: new_value.downcast::<T>().unwrap(),
+                })
+            })
+        }
+    }
     /// Get the value associated with the current thread,
     /// initializing it if not yet defined.
     ///
