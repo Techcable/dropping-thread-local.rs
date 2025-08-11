@@ -57,6 +57,8 @@
 //! - Use [biased reference counting] instead of an `Arc`. This would not require `unsafe` code directly in this crate. Unfortunately, biased reference counting can delay destruction or even leak if the heartbeat function is not called. The [`trc` crate] will not work, as `trc::Trc` is `!Send`.
 //! - Using [`boxcar::Vec`] instead of a `HashMap` for lookup. This is essentially the same data structure that the `thread_local` crate uses, so should make the lookup performance similar.
 //!
+//! *NOTE*: Simply removing `Arc::clone` doesn't help that much. On the M1 mac it reduces the time to 9 ns. (I did this unsoundly, so it cant be published)
+//!
 //! [biased reference counting]: https://dl.acm.org/doi/10.1145/3243176.3243195
 //! [`LocalKey::with`]: https://doc.rust-lang.org/std/thread/struct.LocalKey.html#method.with
 //! [`boxcar::Vec`]: https://docs.rs/boxcar/0.2.13/boxcar/struct.Vec.html
