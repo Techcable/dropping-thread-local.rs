@@ -211,7 +211,12 @@ impl<T: Send + Sync + 'static> Drop for DroppingThreadLocal<T> {
                 assert_eq!(thread.id, thread_id);
                 let value: Option<DynArc> = {
                     let mut lock = thread.values.lock();
-                    lock.remove(self.id.index()).map(|(_, value)| value)
+                    // there is an opportunity to shrink the Vec here,
+                    // but we don't do that because it could waste time growing it again
+                    match lock.get_mut(self.id.index()) {
+                        None => None, // out of bounds
+                        Some(inner) => inner.take().map(|(_, value)| value),
+                    }
                 };
                 // drop value once lock no longer held
                 drop(value);
