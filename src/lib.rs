@@ -66,7 +66,6 @@
 //! [`fragile`]: https://docs.rs/fragile/2/fragile/
 
 extern crate alloc;
-extern crate core;
 
 use alloc::rc::Rc;
 use alloc::sync::{Arc, Weak};
@@ -74,13 +73,15 @@ use core::any::Any;
 use core::fmt::{Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
-use core::num::NonZero;
 use core::ops::Deref;
-use core::sync::atomic::Ordering;
 use std::thread::ThreadId;
 
+use intid::IntegerId;
 use parking_lot::Mutex;
-use portable_atomic::AtomicU64;
+
+use crate::local_ids::{LiveLocalId, OwnedLocalId};
+
+mod local_ids;
 
 /// A thread local that drops its value when the thread is destroyed.
 ///
@@ -88,7 +89,7 @@ use portable_atomic::AtomicU64;
 ///
 /// Dropping this value will free all the associated values.
 pub struct DroppingThreadLocal<T: Send + Sync + 'static> {
-    id: UniqueLocalId,
+    id: OwnedLocalId,
     marker: PhantomData<Arc<T>>,
 }
 impl<T: Send + Sync + 'static + Debug> Debug for DroppingThreadLocal<T> {
@@ -110,7 +111,7 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     #[inline]
     pub fn new() -> Self {
         DroppingThreadLocal {
-            id: UniqueLocalId::alloc(),
+            id: OwnedLocalId::alloc(),
             marker: PhantomData,
         }
     }
@@ -121,7 +122,7 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
         THREAD_STATE.with(|thread| {
             Some(SharedRef {
                 thread_id: thread.id,
-                value: thread.get(self.id)?.downcast::<T>().expect("unexpected type"),
+                value: thread.get(self.id.id())?.downcast::<T>().expect("unexpected type"),
             })
         })
     }
@@ -134,7 +135,7 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
         } else {
             THREAD_STATE.with(|thread| {
                 let new_value = Arc::new(value) as DynArc;
-                thread.init(self.id, &new_value);
+                thread.init(&self.id, &new_value);
                 Ok(SharedRef {
                     thread_id: thread.id,
                     value: new_value.downcast::<T>().unwrap(),
@@ -158,11 +159,11 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     /// Panics if double initialization is detected.
     pub fn get_or_try_init<E>(&self, func: impl FnOnce() -> Result<T, E>) -> Result<SharedRef<T>, E> {
         THREAD_STATE.with(|thread| {
-            let value = match thread.get(self.id) {
+            let value = match thread.get(self.id.id()) {
                 Some(existing) => existing,
                 None => {
                     let new_value = Arc::new(func()?) as DynArc;
-                    thread.init(self.id, &new_value);
+                    thread.init(&self.id, &new_value);
                     new_value
                 }
             };
@@ -173,6 +174,7 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
             })
         })
     }
+
     /// Iterate over currently live values and their associated thread ids.
     ///
     /// New threads that have been spanned after the snapshot was taken will not be present
@@ -184,13 +186,13 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     pub fn snapshot_iter(&self) -> SnapshotIter<T> {
         let Some(snapshot) = snapshot_live_threads() else {
             return SnapshotIter {
-                local_id: self.id,
+                local_id: self.id.clone(),
                 iter: None,
                 marker: PhantomData,
             };
         };
         SnapshotIter {
-            local_id: self.id,
+            local_id: self.id.clone(),
             iter: Some(snapshot.into_iter()),
             marker: PhantomData,
         }
@@ -209,7 +211,7 @@ impl<T: Send + Sync + 'static> Drop for DroppingThreadLocal<T> {
                 assert_eq!(thread.id, thread_id);
                 let value: Option<DynArc> = {
                     let mut lock = thread.values.lock();
-                    lock.remove(&self.id)
+                    lock.remove(self.id.index()).map(|(_, value)| value)
                 };
                 // drop value once lock no longer held
                 drop(value);
@@ -222,7 +224,7 @@ impl<T: Send + Sync + 'static> Drop for DroppingThreadLocal<T> {
 ///
 /// Due to thread death, it is not possible to know the exact size of the iterator.
 pub struct SnapshotIter<T: Send + Sync + 'static> {
-    local_id: UniqueLocalId,
+    local_id: OwnedLocalId,
     iter: Option<imbl::hashmap::ConsumingIter<(ThreadId, Weak<LiveThreadState>), imbl::shared_ptr::DefaultSharedPtr>>,
     // do not make Send+Sync, for flexibility in the future
     marker: PhantomData<Rc<T>>,
@@ -238,7 +240,9 @@ impl<T: Send + Sync + 'static> Iterator for SnapshotIter<T> {
             let Some(thread) = Weak::upgrade(&thread) else { continue };
             let Some(arc) = ({
                 let lock = thread.values.lock();
-                lock.get(&self.local_id).cloned()
+                lock.get(self.local_id.index())
+                    .and_then(Option::as_ref)
+                    .map(|(_id, value)| Arc::clone(value))
             }) else {
                 continue;
             };
@@ -317,33 +321,6 @@ impl<T: Ord> Ord for SharedRef<T> {
     }
 }
 
-struct UniqueIdAllocator {
-    next_id: AtomicU64,
-}
-impl UniqueIdAllocator {
-    const fn new() -> Self {
-        UniqueIdAllocator {
-            next_id: AtomicU64::new(1),
-        }
-    }
-    fn alloc(&self) -> NonZero<u64> {
-        NonZero::new(
-            self.next_id
-                .fetch_update(Ordering::AcqRel, Ordering::Acquire, |x| x.checked_add(1))
-                .expect("id overflow"),
-        )
-        .unwrap()
-    }
-}
-#[derive(Copy, Clone, Debug, Eq, PartialOrd, PartialEq, Hash)]
-struct UniqueLocalId(NonZero<u64>);
-impl UniqueLocalId {
-    fn alloc() -> Self {
-        static ALLOCATOR: UniqueIdAllocator = UniqueIdAllocator::new();
-        UniqueLocalId(ALLOCATOR.alloc())
-    }
-}
-
 type LiveThreadMap = imbl::GenericHashMap<
     ThreadId,
     Weak<LiveThreadState>,
@@ -366,9 +343,9 @@ fn snapshot_live_threads() -> Option<LiveThreadMap> {
 thread_local! {
     static THREAD_STATE: Arc<LiveThreadState> = {
         let id = std::thread::current().id();
-        let state =Arc::new(LiveThreadState {
+        let state = Arc::new(LiveThreadState {
             id,
-            values: Mutex::new(foldhash::HashMap::default()),
+            values: Mutex::new(Vec::new()),
         });
         let mut live_threads = LIVE_THREADS.lock();
         let live_threads = live_threads.get_or_insert_default();
@@ -387,6 +364,8 @@ struct LiveThreadState {
     id: ThreadId,
     /// Maps from local ids to values.
     ///
+    /// TODO: Cannot use the [idmap crate], because it doesn't support owned keys (issue [DuckLogic/intid#2]).
+    ///
     /// ## Performance
     /// This is noticeably slower than what `thread_local` offers.
     ///
@@ -398,26 +377,31 @@ struct LiveThreadState {
     /// so a `Mutex<Vec<T>> might also work and be simpler.
     /// To avoid unbounded memory usage if locals are constantly being allocated/drops,
     /// this would require reusing indexes.
-    values: Mutex<foldhash::HashMap<UniqueLocalId, DynArc>>,
+    values: Mutex<Vec<Option<(OwnedLocalId, DynArc)>>>,
 }
 impl LiveThreadState {
     #[inline]
-    fn get(&self, id: UniqueLocalId) -> Option<DynArc> {
+    fn get(&self, id: LiveLocalId) -> Option<DynArc> {
         let lock = self.values.lock();
-        Some(Arc::clone(lock.get(&id)?))
+        Some(Arc::clone(&lock.get(id.to_int())?.as_ref()?.1))
     }
     // the arc has dynamic type to avoid monomorphization
     #[cold]
     #[inline(never)]
-    fn init(&self, id: UniqueLocalId, new_value: &DynArc) {
+    fn init(&self, id: &OwnedLocalId, new_value: &DynArc) {
         let mut lock = self.values.lock();
-        use std::collections::hash_map::Entry;
-        match lock.entry(id) {
-            Entry::Occupied(_) => {
+        let index = id.index();
+        match lock.get(index).and_then(Option::as_ref) {
+            Some(_existing) => {
                 panic!("unexpected double initialization of thread-local value")
             }
-            Entry::Vacant(entry) => {
-                entry.insert(Arc::clone(new_value));
+            None => {
+                // Unlike DirectIdMap::insert, I don't care whether growth is amortized here,
+                // because this is the cold path
+                while lock.len() <= index {
+                    lock.push(None)
+                }
+                lock[index] = Some((id.clone(), Arc::clone(new_value)));
             }
         }
     }

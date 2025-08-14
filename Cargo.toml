@@ -13,10 +13,13 @@ rust-version = "1.85"
 
 [dependencies]
 parking_lot = "0.12"
-portable-atomic = "1"
 foldhash = "0.1"
+nonmax = "0.5"
 # persistent collections
 imbl = "6"
+intid = { version = "0.3.0-alpha.3", features = ["nonmax"] }
+idmap = "0.3.0-alpha.2"
+intid-allocator = "0.3.0-alpha.3"
 
 [dev-dependencies]
 thread_local = "1"
