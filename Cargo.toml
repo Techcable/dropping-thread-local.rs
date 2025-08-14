@@ -27,6 +27,9 @@ nightly = [
     "parking_lot/nightly",
 ]
 
+[profile.bench]
+debug = true
+
 [[bench]]
 name = "lookup"
 harness = false
