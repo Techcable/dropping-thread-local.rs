@@ -367,16 +367,19 @@ struct LiveThreadState {
     /// TODO: Cannot use the [idmap crate], because it doesn't support owned keys (issue [DuckLogic/intid#2]).
     ///
     /// ## Performance
-    /// This is noticeably slower than what `thread_local` offers.
+    /// Surprisingly, using a vector is not much faster than using a hashmap.
+    /// Reusing ids should avoid growing the vector too much,
+    /// so memory is only proportional to the peak number of live ids.
     ///
-    /// We could make it faster if we used a vector
-    /// A `boxcar::Vec` is essentially the same data structure as `thread_local` uses,
+    /// A [`boxcar::Vec`] is essentially the same data structure as `thread_local` uses,
     /// and would allow us to get rid of the lock.
-    /// The only difference is we would be mapping from local ids -> values,
     /// However, the lock is uncontented and parking_lot makes that relatively cheap,
-    /// so a `Mutex<Vec<T>> might also work and be simpler.
-    /// To avoid unbounded memory usage if locals are constantly being allocated/drops,
-    /// this would require reusing indexes.
+    /// only requiring an acquire CAS and release store in the common case.
+    /// Using `boxcar::Vec::get` reduces this to a single an acquire load,
+    /// which is not that much better.
+    /// A potential downside of boxcar::Vec is increased memory usage.
+    ///
+    /// [`boxcar::Vec`]: https://docs.rs/boxcar/latest/boxcar/struct.Vec.html
     values: Mutex<Vec<Option<(OwnedLocalId, DynArc)>>>,
 }
 impl LiveThreadState {
