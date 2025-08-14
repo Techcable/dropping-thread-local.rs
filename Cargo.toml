@@ -18,7 +18,6 @@ nonmax = "0.5"
 # persistent collections
 imbl = "6"
 intid = { version = "0.3.0-alpha.3", features = ["nonmax"] }
-idmap = "0.3.0-alpha.2"
 intid-allocator = "0.3.0-alpha.3"
 
 [dev-dependencies]
