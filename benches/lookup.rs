@@ -47,4 +47,9 @@ fn main() {
             black_box(local.get());
         });
     });
+
+    c.bench_function("Arc::clone", |b| {
+        let arc = Arc::new(7);
+        b.iter(|| Arc::clone(&arc));
+    });
 }
