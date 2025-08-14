@@ -371,13 +371,14 @@ struct LiveThreadState {
     /// Reusing ids should avoid growing the vector too much,
     /// so memory is only proportional to the peak number of live ids.
     ///
-    /// A [`boxcar::Vec`] is essentially the same data structure as `thread_local` uses,
-    /// and would allow us to get rid of the lock.
-    /// However, the lock is uncontented and parking_lot makes that relatively cheap,
+    /// A [`boxcar::Vec`] is essentially the same data structure as `thread_local` uses.
+    /// However it does not allow modifying entries that already exist,
+    /// making it unusable for our purposes without per-element synchronization.
+    /// Since the lock is thread-local, it should be uncontented.
+    /// Using parking_lot makes that relatively cheap,
     /// only requiring an acquire CAS and release store in the common case.
-    /// Using `boxcar::Vec::get` reduces this to a single an acquire load,
-    /// which is not that much better.
-    /// A potential downside of boxcar::Vec is increased memory usage.
+    /// By comparison `boxcar::Vec::get` only reduces this to a single an acquire load.
+    /// So even if we could use it, performance would not be much better.
     ///
     /// [`boxcar::Vec`]: https://docs.rs/boxcar/latest/boxcar/struct.Vec.html
     values: Mutex<Vec<Option<(OwnedLocalId, DynArc)>>>,

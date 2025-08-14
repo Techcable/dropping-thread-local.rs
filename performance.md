@@ -7,7 +7,7 @@ This performance is better than I expected (at least on my macbook). The biggest
 
 - Avoid requiring `Arc::clone` by using a [`LocalKey::with`] style API, and making `drop(DroppingThreadLocal)` delay freeing values from live threads until after that live thread dies.
 - Use [biased reference counting] instead of an `Arc`. This would not require `unsafe` code directly in this crate. Unfortunately, biased reference counting can delay destruction or even leak if the heartbeat function is not called. The [`trc` crate] will not work, as `trc::Trc` is `!Send`.
-- Using [`boxcar::Vec`] instead of a `HashMap` for lookup. This is essentially the same data structure that the `thread_local` crate uses, so should make the lookup performance similar.
+- ~~Using [`boxcar::Vec`] instead of a `HashMap` for lookup.~~ This is essentially the same data structure that the `thread_local` crate uses, but is not an option because we need to modify existing entries.  UThe performance would not be that much better than a `parking_lot::Mutex<Vec<...>`, since it still requires an atomic load in the `get` function (as opposed to CAS + release store for a lock).
 
 *NOTE*: Simply removing `Arc::clone` doesn't help that much. On the M1 mac it reduces the time to 9 ns. (I did this unsoundly, so it cant be published)
 
