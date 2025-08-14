@@ -61,31 +61,11 @@ impl Deref for OwnedLocalId {
         &self.id
     }
 }
-/// An integer index corresponding to a live ID.
-///
-/// There is nothing keeping this id valid,
-/// so it could be reused by another local while still in use.
-/// To prevent this, use [`OwnedLocalId`].
-#[derive(Copy, Clone, Debug, Eq, PartialOrd, PartialEq, Hash)]
-pub struct LiveLocalId(NonMaxUsize);
-impl intid::IntegerId for LiveLocalId {
-    type Int = usize;
-
-    #[inline]
-    fn from_int_checked(id: Self::Int) -> Option<Self> {
-        Some(LiveLocalId(NonMaxUsize::new(id)?))
-    }
-
-    #[inline]
-    fn to_int(self) -> Self::Int {
-        self.0.get()
-    }
-}
-impl intid::ContiguousIntegerId for LiveLocalId {
-    const MIN_ID: Self = LiveLocalId(NonMaxUsize::ZERO);
-    const MAX_ID: Self = LiveLocalId(NonMaxUsize::MAX);
-}
-impl intid::IntegerIdCounter for LiveLocalId {
-    const START: Self = LiveLocalId(NonMaxUsize::ZERO);
-    const START_INT: Self::Int = 0;
+intid::define_newtype_counter! {
+    /// An integer index corresponding to a live ID.
+    ///
+    /// There is nothing keeping this id valid,
+    /// so it could be reused by another local while still in use.
+    /// To prevent this, use [`OwnedLocalId`].
+    pub struct LiveLocalId(NonMaxUsize);
 }
