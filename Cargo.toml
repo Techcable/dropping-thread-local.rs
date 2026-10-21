@@ -23,7 +23,7 @@ imbl = "7"
 intid = { version = "0.3.0-beta.1", features = ["nonmax"] }
 intid-allocator = "0.3.0-beta.1"
 nonmax = "0.5"
-parking_lot = "0.12"
+parking_lot = ">=0.12,<=0.13"
 
 [dev-dependencies]
 # Need to support building with criterion v0.7 as v0.8 has a MSRV higher than we do

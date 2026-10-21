@@ -20,6 +20,10 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
   - Avoids [`RUSTSEC-2026-0247`] warning that `bitmaps` is unmaintained (not a security problem)
 - Allow testing with criterion v0.7 in addition to v0.8 (uzknwvlo)
   - Needed to build tests on MSRV of 1.85, because v0.8 requires Rust 1.86
+- Support both versions of parking_lot v0.12 and v0.13 (kpwkmwsn)
+  - Cargo will select the best version based upon your MSRV
+  - Does not affect the public API in any way, so may be changed or removed in the future.
+  - It is easy to support multiple versions since the only method we use is `Mutex::lock`.
 
 [`RUSTSEC-2026-0292`]: https://rustsec.org/advisories/RUSTSEC-2026-0292.html
 [`RUSTSEC-2026-0247`]: https://rustsec.org/advisories/RUSTSEC-2026-0247.html
