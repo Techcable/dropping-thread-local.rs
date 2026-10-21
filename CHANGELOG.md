@@ -13,8 +13,16 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ## Unreleased
 
 ### Changed
+- Update `imbl` from v6 to v7, fixing vulnerability in `imbl` dependency (skrttvow)
+  - Avoids [`RUSTSEC-2026-0292`], a double-free vulnerability in `imbl-sized-chunks`
+  - Note that there is no vulnerability on `dropping-thread-local` itself.
+    This crate does not use unsafe code and so cannot have memory safety problems.
+  - Avoids [`RUSTSEC-2026-0247`] warning that `bitmaps` is unmaintained (not a security problem)
 - Allow testing with criterion v0.7 in addition to v0.8 (uzknwvlo)
   - Needed to build tests on MSRV of 1.85, because v0.8 requires Rust 1.86
+
+[`RUSTSEC-2026-0292`]: https://rustsec.org/advisories/RUSTSEC-2026-0292.html
+[`RUSTSEC-2026-0247`]: https://rustsec.org/advisories/RUSTSEC-2026-0247.html
 
 ### Added
 - Setup `cargo-deny` to check for security and licensing issues (qrqzwvyv)

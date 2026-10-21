@@ -19,7 +19,7 @@ name = "lookup"
 [dependencies]
 foldhash = "0.2"
 # persistent collections
-imbl = "6"
+imbl = "7"
 intid = { version = "0.3.0-beta.1", features = ["nonmax"] }
 intid-allocator = "0.3.0-beta.1"
 nonmax = "0.5"
