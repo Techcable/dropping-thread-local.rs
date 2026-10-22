@@ -33,10 +33,10 @@ although if a thread dies during iteration, it may not show up.
 See the method documentation for more details.
 
 ## Performance
-Benchmarks show that lookup is 10x and 30x slower than the [`thread_local`] crate, which is in turn about 2x slower than [`std::thread_local!`](https://doc.rust-lang.org/stable/std/macro.thread_local.html).
+Benchmarks show that lookup is between 10x and 30x slower than the [`thread_local`] crate, which is in turn about 2x slower than [`std::thread_local!`](https://doc.rust-lang.org/stable/std/macro.thread_local.html).
 
 Keep in mind that using a `std::thread_local` is a very fast operation.
-It takes about 0.5 nanoseconds on both my M1 Mac and a Intel i5 from 2017.
+It takes about 0.5 nanoseconds on both my M1 Mac and an Intel i5 from 2017.
 For reference, calling [`Arc::clone`](https://doc.rust-lang.org/stable/alloc/sync/struct.Arc.html#method.clone) takes about 11 ns on both machines.
 
 See `performance.md` in the repository root for benchmarks results and more detailed
@@ -53,13 +53,13 @@ This includes releasing locks before any destructors are executed.
 The type that is stored must be `Send + Sync + 'static`.
 The `Send` bound is necessary because the [`DroppingThreadLocal`](https://docs.rs/dropping-thread-local/latest/dropping_thread_local/struct.DroppingThreadLocal.html) may be dropped from any thread.
 The `Sync` bound is necessary to support snapshots,
-and the `'static` bound is due to internal implementation chooses (use of safe code).
+and the `'static` bound is due to internal implementation choices (use of safe code).
 
 A Mutex can be used to work around the `Sync` limitation.
-(I recommend [`parking_lot::Mutex`](https://docs.rs/parking_lot/latest/parking_lot/mutex/type.Mutex.html), which is optimized for uncontented locks)
+(I recommend [`parking_lot::Mutex`](https://docs.rs/parking_lot/latest/parking_lot/mutex/type.Mutex.html), which is optimized for uncontended locks)
 You can attempt to use the [`fragile`] crate to work around the `Send` limitation,
-but this will cause panics if the value is dropped from another thead.
-Some ways a value can be dropped from another thread if a snapshot keeps the value alive,
+but this will cause panics if the value is dropped from another thread.
+Some ways a value can be dropped from another thread are if a snapshot keeps the value alive,
 or if the [`DroppingThreadLocal`](https://docs.rs/dropping-thread-local/latest/dropping_thread_local/struct.DroppingThreadLocal.html) itself is dropped.
 
 [`thread_local`]: https://docs.rs/thread_local/1.1/thread_local/

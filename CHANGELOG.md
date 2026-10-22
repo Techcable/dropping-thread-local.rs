@@ -28,6 +28,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 - Setup `cargo-deny` to check for security and licensing issues (qrqzwvyv)
 - Setup Github Actions for CI (unruoooy)
 
+### Fixed
+- Fix typos and grammar in documentation and comments (nwlpmopk)
+
 ## v0.1.5 - 2026-01-13
 Upgrade to foldhash v0.2.
 

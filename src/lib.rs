@@ -33,10 +33,10 @@
 //! See the method documentation for more details.
 //!
 //! # Performance
-//! Benchmarks show that lookup is 10x and 30x slower than the [`thread_local`] crate, which is in turn about 2x slower than [`std::thread_local!`].
+//! Benchmarks show that lookup is between 10x and 30x slower than the [`thread_local`] crate, which is in turn about 2x slower than [`std::thread_local!`].
 //!
 //! Keep in mind that using a `std::thread_local` is a very fast operation.
-//! It takes about 0.5 nanoseconds on both my M1 Mac and a Intel i5 from 2017.
+//! It takes about 0.5 nanoseconds on both my M1 Mac and an Intel i5 from 2017.
 //! For reference, calling [`Arc::clone`] takes about 11 ns on both machines.
 //!
 //! See `performance.md` in the repository root for benchmarks results and more detailed
@@ -53,13 +53,13 @@
 //! The type that is stored must be `Send + Sync + 'static`.
 //! The `Send` bound is necessary because the [`DroppingThreadLocal`] may be dropped from any thread.
 //! The `Sync` bound is necessary to support snapshots,
-//! and the `'static` bound is due to internal implementation chooses (use of safe code).
+//! and the `'static` bound is due to internal implementation choices (use of safe code).
 //!
 //! A Mutex can be used to work around the `Sync` limitation.
-//! (I recommend [`parking_lot::Mutex`], which is optimized for uncontented locks)
+//! (I recommend [`parking_lot::Mutex`], which is optimized for uncontended locks)
 //! You can attempt to use the [`fragile`] crate to work around the `Send` limitation,
-//! but this will cause panics if the value is dropped from another thead.
-//! Some ways a value can be dropped from another thread if a snapshot keeps the value alive,
+//! but this will cause panics if the value is dropped from another thread.
+//! Some ways a value can be dropped from another thread are if a snapshot keeps the value alive,
 //! or if the [`DroppingThreadLocal`] itself is dropped.
 //!
 //! [`thread_local`]: https://docs.rs/thread_local/1.1/thread_local/
@@ -177,7 +177,7 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
 
     /// Iterate over currently live values and their associated thread ids.
     ///
-    /// New threads that have been spanned after the snapshot was taken will not be present
+    /// New threads that have been spawned after the snapshot was taken will not be present
     /// in the iterator.
     /// Threads that die after the snapshot is taken may or may not be present.
     /// Values from threads that die before the snapshot will not be present.
@@ -225,7 +225,7 @@ impl<T: Send + Sync + 'static> Drop for DroppingThreadLocal<T> {
     }
 }
 /// Iterates over a snapshot of the values,
-/// given by [`DroppingThreadLocal::snapshot_iter`].`
+/// given by [`DroppingThreadLocal::snapshot_iter`].
 ///
 /// Due to thread death, it is not possible to know the exact size of the iterator.
 pub struct SnapshotIter<T: Send + Sync + 'static> {
@@ -281,7 +281,7 @@ pub struct SharedRef<T> {
     value: Arc<T>,
 }
 impl<T> SharedRef<T> {
-    /// The thread id the value was
+    /// The id of the thread this value is associated with.
     #[inline]
     pub fn thread_id(this: &Self) -> ThreadId {
         this.thread_id
@@ -334,7 +334,7 @@ type LiveThreadMap = imbl::GenericHashMap<
 >;
 /// Map of currently live threads.
 ///
-/// This is a persistent map to allow quick snapshots to be taken by drop function and iteration/
+/// This is a persistent map to allow quick snapshots to be taken by drop function and iteration.
 /// I use `imbl` instead of `rpds`, because `rpds` doesn't support an owned iterator,
 /// only a borrowed iterator which would require an extra allocation.
 /// I use a hashmap instead of a `BTreeMap` because that would require `ThreadId: Ord`,
@@ -379,10 +379,10 @@ struct LiveThreadState {
     /// A [`boxcar::Vec`] is essentially the same data structure as `thread_local` uses.
     /// However it does not allow modifying entries that already exist,
     /// making it unusable for our purposes without per-element synchronization.
-    /// Since the lock is thread-local, it should be uncontented.
+    /// Since the lock is thread-local, it should be uncontended.
     /// Using parking_lot makes that relatively cheap,
     /// only requiring an acquire CAS and release store in the common case.
-    /// By comparison `boxcar::Vec::get` only reduces this to a single an acquire load.
+    /// By comparison `boxcar::Vec::get` only reduces this to a single acquire load.
     /// So even if we could use it, performance would not be much better.
     ///
     /// [`boxcar::Vec`]: https://docs.rs/boxcar/latest/boxcar/struct.Vec.html

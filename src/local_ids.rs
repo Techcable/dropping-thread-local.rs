@@ -26,7 +26,7 @@ pub struct OwnedLocalId {
     id: LiveLocalId,
 }
 impl OwnedLocalId {
-    /// Allocate a new id for a
+    /// Allocate a new id for a thread local.
     pub fn alloc() -> OwnedLocalId {
         let id = RAW_ID_ALLOCATOR.lock().alloc();
         OwnedLocalId {

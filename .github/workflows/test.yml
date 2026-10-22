@@ -2,7 +2,7 @@
 #
 # Based on the biasedrc CI config
 # Indirectly based on the slog CI config.
-# All merged into one file so we can use `allgood` workaround for Gihtub Actions.
+# All merged into one file so we can use `allgood` workaround for GitHub Actions.
 on: [push, pull_request]
 name: CI
 
@@ -238,7 +238,7 @@ jobs:
         with:
           components: rustfmt
       - shell: bash
-        # While `--all` is normally an alias for `--workspace`, `cargo fmt` doesn't accept the latter/
+        # While `--all` is normally an alias for `--workspace`, `cargo fmt` doesn't accept the latter.
         run: |
           cargo fmt --all -- --check
 
