@@ -31,6 +31,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ### Fixed
 - Fix typos and grammar in documentation and comments (nwlpmopk)
 
+### Documented
+- Document that accessing a thread local while a thread is being destroyed may panic (uxvxsozt)
+
 ## v0.1.5 - 2026-01-13
 Upgrade to foldhash v0.2.
 

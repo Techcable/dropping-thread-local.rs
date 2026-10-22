@@ -16,12 +16,24 @@
 //! I would say the `thread_local` crate is good for functionality like reusing allocations
 //! or for having local caches that can be sensibly reused once a thread dies.
 //!
-//! This crate will attempt to run destructors as promptly as possible,
-//! but taking snapshots may interfere with this (see below).
-//! Panics in thread destructors will cause aborts, just like they do with [`std::thread_local!`].
-//!
 //! Right now, this crate has no unsafe code.
 //! This may change if it can bring a significant performance improvement.
+//!
+//! # Destructors
+//! This crate will attempt to run destructors as promptly as possible,
+//! but taking snapshots may interfere with this (see the section on snapshots).
+//! Panics in thread destructors will cause aborts, just like they do with [`std::thread_local!`].
+//!
+//! Trying to access a thread local while the thread is being destroyed may cause a panic.
+//! Usually, the only way to run code during thread death is through the destructor of another thread local.
+//! Since panicking destructors cause aborts, this means that accessing thread locals in another
+//! thread-local destructor can cause aborts from accessing.
+//! The stdlib [`std::thread_local!`] has similar limitations as described in [`std::thread::LocalKey`].
+//! The destruction order is implementation-defined and platform-dependent,
+//! so it's best to just avoid accessing other thread locals from a thread-local destructor.
+//!
+//! Snapshots will never panic even when threads are being destroyed,
+//! though they may skip over values from those dying threads.
 //!
 //! # Snapshots
 //! The most complicated feature of this library is snapshots.
@@ -117,6 +129,8 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     }
     /// Get the value associated with the current thread,
     /// or `None` if not initialized.
+    ///
+    /// This may panic if the thread is currently being destroyed.
     #[inline]
     pub fn get(&self) -> Option<SharedRef<T>> {
         THREAD_STATE.with(|thread| {
@@ -129,6 +143,8 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     /// Set the value associated with this thread,
     /// returning an `Err(existing_val)` if already initialized,
     /// and a reference to the new value if successful.
+    ///
+    /// This may panic if the thread is currently being destroyed.
     pub fn set(&self, value: T) -> Result<SharedRef<T>, SharedRef<T>> {
         if let Some(existing) = self.get() {
             Err(existing)
@@ -147,6 +163,7 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     /// initializing it if not yet defined.
     ///
     /// Panics if double initialization is detected.
+    /// This may panic if the thread is currently being destroyed.
     pub fn get_or_init(&self, func: impl FnOnce() -> T) -> SharedRef<T> {
         match self.get_or_try_init::<core::convert::Infallible>(|| Ok(func())) {
             Ok(success) => success,
@@ -157,6 +174,7 @@ impl<T: Send + Sync + 'static> DroppingThreadLocal<T> {
     /// attempting to initialize it if not yet defined.
     ///
     /// Panics if double initialization is detected.
+    /// This may panic if the thread is currently being destroyed.
     pub fn get_or_try_init<E>(&self, func: impl FnOnce() -> Result<T, E>) -> Result<SharedRef<T>, E> {
         THREAD_STATE.with(|thread| {
             let value = match thread.get(self.id.id()) {

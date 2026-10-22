@@ -16,12 +16,24 @@ mirroring [`std::thread_local!`](https://doc.rust-lang.org/stable/std/macro.thre
 I would say the `thread_local` crate is good for functionality like reusing allocations
 or for having local caches that can be sensibly reused once a thread dies.
 
-This crate will attempt to run destructors as promptly as possible,
-but taking snapshots may interfere with this (see below).
-Panics in thread destructors will cause aborts, just like they do with [`std::thread_local!`](https://doc.rust-lang.org/stable/std/macro.thread_local.html).
-
 Right now, this crate has no unsafe code.
 This may change if it can bring a significant performance improvement.
+
+## Destructors
+This crate will attempt to run destructors as promptly as possible,
+but taking snapshots may interfere with this (see the section on snapshots).
+Panics in thread destructors will cause aborts, just like they do with [`std::thread_local!`](https://doc.rust-lang.org/stable/std/macro.thread_local.html).
+
+Trying to access a thread local while the thread is being destroyed may cause a panic.
+Usually, the only way to run code during thread death is through the destructor of another thread local.
+Since panicking destructors cause aborts, this means that accessing thread locals in another
+thread-local destructor can cause aborts from accessing.
+The stdlib [`std::thread_local!`](https://doc.rust-lang.org/stable/std/macro.thread_local.html) has similar limitations as described in [`std::thread::LocalKey`](https://doc.rust-lang.org/stable/std/thread/local/struct.LocalKey.html).
+The destruction order is implementation-defined and platform-dependent,
+so it's best to just avoid accessing other thread locals from a thread-local destructor.
+
+Snapshots will never panic even when threads are being destroyed,
+though they may skip over values from those dying threads.
 
 ## Snapshots
 The most complicated feature of this library is snapshots.
