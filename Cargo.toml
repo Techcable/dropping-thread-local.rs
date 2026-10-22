@@ -9,6 +9,7 @@ repository = "https://github.com/Techcable/dropping-thread-local.rs"
 keywords = ["concurrent", "destructor", "drop", "thread", "thread-local"]
 categories = ["concurrency", "data-structures", "memory-management"]
 # 1.85 - 2024 edition
+# 1.86 - criterion@0.8
 rust-version = "1.85"
 
 [[bench]]
@@ -25,7 +26,9 @@ nonmax = "0.5"
 parking_lot = "0.12"
 
 [dev-dependencies]
-criterion = { version = "0.8" }
+# Need to support building with criterion v0.7 as v0.8 has a MSRV higher than we do
+# There aren't many changes between these releases so this is pretty easy.
+criterion = ">=0.7,<=0.8"
 thread_local = "1"
 
 [features]

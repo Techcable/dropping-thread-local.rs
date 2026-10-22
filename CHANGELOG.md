@@ -12,6 +12,10 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+### Changed
+- Allow testing with criterion v0.7 in addition to v0.8 (uzknwvlo)
+  - Needed to build tests on MSRV of 1.85, because v0.8 requires Rust 1.86
+
 ### Added
 - Setup `cargo-deny` to check for security and licensing issues (qrqzwvyv)
 
