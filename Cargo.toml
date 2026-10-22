@@ -36,25 +36,25 @@ nightly = [
 [lints.clippy]
 # style
 
-alloc-instead-of-core = "warn"
-checked-conversions = "deny" # prefer try_from to explicit range checks
+alloc_instead_of_core = "warn"
+checked_conversions = "deny" # prefer try_from to explicit range checks
 macro_use_imports = "deny" # forbid old-style #[macro_use]
-std-instead-of-alloc = "warn"
-std-instead-of-core = "warn"
+std_instead_of_alloc = "warn"
+std_instead_of_core = "warn"
 
 # in an ideal world. overflowing casts would panic
 # linting them (with deny) is the second best option
 
-cast-lossless = "allow" # lossless casts are fine, lints will catch if types change
-cast-possible-truncation = "deny"
-cast-possible-wrap = "deny"
-cast-precision-loss = "deny"
-cast-ptr-alignment = "deny"
-cast-sign-loss = "deny"
-char-lit-as-u8 = "deny"
-fn-to-numeric-cast = "deny"
-fn-to-numeric-cast-any = "deny"
-fn-to-numeric-cast-with-truncation = "deny"
+cast_lossless = "allow" # lossless casts are fine, lints will catch if types change
+cast_possible_truncation = "deny"
+cast_possible_wrap = "deny"
+cast_precision_loss = "deny"
+cast_ptr_alignment = "deny"
+cast_sign_loss = "deny"
+char_lit_as_u8 = "deny"
+fn_to_numeric_cast = "deny"
+fn_to_numeric_cast_any = "deny"
+fn_to_numeric_cast_with_truncation = "deny"
 ptr_as_ptr = "allow" # pointer casts are fine as long as they don't violate another rule
 
 # safety
@@ -69,10 +69,10 @@ print_stderr = "allow"
 print_stdout = "allow"
 
 [lints.rust]
-macro-use-extern-crate = "deny"
-missing-docs = "deny"
-rust-2024-compatibility = "warn"
-unsafe-op-in-unsafe-fn = "deny"
+macro_use_extern_crate = "deny"
+missing_docs = "deny"
+rust_2024_compatibility = { level = "warn", priority = -1 }
+unsafe_op_in_unsafe_fn = "deny"
 
 [profile.bench]
 debug = true
