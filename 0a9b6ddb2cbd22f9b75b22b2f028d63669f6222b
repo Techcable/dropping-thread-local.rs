@@ -1,0 +1,3 @@
+This actually dropped the `idmap` dependency
+
+I made a mistake and said `intid` instead.
