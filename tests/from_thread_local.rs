@@ -4,9 +4,11 @@
 //! - Removed use of unsupported `clear` method (`same_thread` test)
 //! - Iteration should not expect to see values from dead value (`iter` test)
 //! - Remove `RefCell<String>` from test_sync - Currently `!Sync` types are unsupported
-use std::sync::Arc;
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering::Relaxed;
+extern crate alloc;
+
+use alloc::sync::Arc;
+use core::sync::atomic::AtomicUsize;
+use core::sync::atomic::Ordering::Relaxed;
 use std::thread;
 
 use dropping_thread_local::DroppingThreadLocal;
@@ -21,14 +23,14 @@ fn same_thread() {
     let create = make_create();
     let tls = DroppingThreadLocal::new();
     assert_eq!(None, tls.get());
-    assert_eq!("DroppingThreadLocal { local_data: None }", format!("{:?}", &tls));
+    assert_eq!("DroppingThreadLocal { local_data: None }", format!("{:?}", tls));
     assert_eq!(0, *tls.get_or_init(|| create()));
     assert_eq!(Some(&0), tls.get().as_deref());
     assert_eq!(0, *tls.get_or_init(|| create()));
     assert_eq!(Some(&0), tls.get().as_deref());
     assert_eq!(0, *tls.get_or_init(|| create()));
     assert_eq!(Some(&0), tls.get().as_deref());
-    assert_eq!("DroppingThreadLocal { local_data: Some(0) }", format!("{:?}", &tls));
+    assert_eq!("DroppingThreadLocal { local_data: Some(0) }", format!("{:?}", tls));
     // DroppingThreadLocal::clear is currently not implemented
     #[cfg(any())]
     {

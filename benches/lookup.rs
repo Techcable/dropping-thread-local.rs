@@ -1,6 +1,8 @@
 #![allow(missing_docs)]
-use std::hint::black_box;
-use std::sync::Arc;
+extern crate alloc;
+
+use alloc::sync::Arc;
+use core::hint::black_box;
 
 use dropping_thread_local::DroppingThreadLocal;
 use thread_local::ThreadLocal;
@@ -20,7 +22,7 @@ fn main() {
         std::thread_local!(static LOCAL: Arc<i32> = Arc::new(0));
         LOCAL.with(|x| black_box(**x));
         b.iter_with_large_drop(|| {
-            black_box(LOCAL.with(|x| Arc::clone(x)));
+            black_box(LOCAL.with(Arc::clone));
         });
     });
 
