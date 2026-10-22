@@ -12,6 +12,14 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+## v0.1.6 - 2026-10-21
+Update `imbl` from v6 to v7, fixing vulnerability i
+
+Note that there is no vulnerability on `dropping-thread-local` itself.
+This crate does not use unsafe code and so cannot have memory safety problems.
+
+Avoids [`RUSTSEC-2026-0292`] in `imbl-sized-chunks`.
+
 ### Changed
 - Update `imbl` from v6 to v7, fixing vulnerability in `imbl` dependency (skrttvow)
   - Avoids [`RUSTSEC-2026-0292`], a double-free vulnerability in `imbl-sized-chunks`
